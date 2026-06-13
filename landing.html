@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agent World Kit — Build AI agents that actually live in Minecraft</title>
+<meta name="description" content="The exact build behind the living Minecraft world where Claude + GPT agents walk, talk, build, scout, and hand jobs to each other. Real code. Every pattern. $29.">
+<meta property="og:title" content="Agent World Kit — Build AI agents that actually live in Minecraft">
+<meta property="og:description" content="Body + brain + loop, with eyes, a foreman, and a task list. The real build, the working code, $0 API bill. $29.">
+<meta property="og:type" content="website">
+<style>
+  :root {
+    --bg: #07080d;
+    --surface: #0d0f18;
+    --surface2: #151725;
+    --border: #252842;
+    --green: #22c55e;
+    --cyan: #06b6d4;
+    --orange: #f59e0b;
+    --purple: #a78bfa;
+    --red: #ef4444;
+    --text: #f1f5f9;
+    --muted: #94a3b8;
+    --code-bg: #0a0c14;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+
+  body {
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(6,182,212,0.10), transparent 60%),
+      radial-gradient(900px 500px at -10% 20%, rgba(167,139,250,0.08), transparent 55%),
+      var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.7;
+    font-size: 17px;
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+
+  .wrap { max-width: 860px; margin: 0 auto; padding: 0 1.5rem; }
+
+  /* ---------- HERO ---------- */
+  header.hero {
+    text-align: center;
+    padding: 5rem 1.5rem 3.5rem;
+    border-bottom: 1px solid var(--border);
+    background: linear-gradient(180deg, rgba(6,182,212,0.05), transparent 70%);
+  }
+
+  .badge {
+    display: inline-block;
+    font-size: 0.72rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--cyan);
+    border: 1px solid rgba(6,182,212,0.35);
+    border-radius: 999px;
+    padding: 0.35rem 0.9rem;
+    margin-bottom: 1.6rem;
+    background: rgba(6,182,212,0.06);
+  }
+
+  header.hero h1 {
+    font-size: clamp(2.2rem, 6vw, 3.5rem);
+    line-height: 1.1;
+    letter-spacing: -0.025em;
+    font-weight: 800;
+    background: linear-gradient(120deg, #ffffff 28%, var(--cyan) 72%, var(--purple));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    margin-bottom: 1.2rem;
+  }
+
+  header.hero .sub {
+    font-size: clamp(1.1rem, 2.6vw, 1.4rem);
+    color: var(--text);
+    font-weight: 600;
+    max-width: 680px;
+    margin: 0 auto 1.4rem;
+  }
+
+  header.hero .lede {
+    font-size: 1.05rem;
+    color: var(--muted);
+    max-width: 640px;
+    margin: 0 auto 2rem;
+  }
+
+  /* ---------- BUY BUTTON ---------- */
+  .buy-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    font-size: 1.15rem;
+    font-weight: 750;
+    letter-spacing: 0.01em;
+    color: #04121a;
+    background: linear-gradient(135deg, var(--cyan), #38bdf8 55%, var(--purple));
+    border: none;
+    border-radius: 14px;
+    padding: 1.05rem 2.3rem;
+    cursor: pointer;
+    text-decoration: none;
+    box-shadow: 0 10px 34px rgba(6,182,212,0.35), inset 0 1px 0 rgba(255,255,255,0.25);
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+  }
+  .buy-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 44px rgba(6,182,212,0.5), inset 0 1px 0 rgba(255,255,255,0.3);
+    border: none;
+  }
+  .buy-btn .price { color: #04121a; }
+  .buy-btn .arrow { font-weight: 800; }
+
+  .buy-meta {
+    margin-top: 0.95rem;
+    font-size: 0.88rem;
+    color: var(--muted);
+    letter-spacing: 0.01em;
+  }
+  .buy-meta strong { color: var(--green); }
+
+  /* requirement strip */
+  .req {
+    display: inline-block;
+    margin-top: 1.8rem;
+    font-size: 0.95rem;
+    color: var(--muted);
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 0.85rem 1.3rem;
+    max-width: 660px;
+  }
+  .req strong { color: var(--green); }
+
+  /* ---------- SECTIONS ---------- */
+  main { padding-top: 1rem; }
+
+  section.block {
+    margin-top: 3.4rem;
+    padding-top: 2.6rem;
+    border-top: 1px solid var(--border);
+  }
+  section.block:first-of-type { border-top: none; }
+
+  .eyebrow {
+    font-size: 0.74rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--cyan);
+    font-weight: 700;
+    margin-bottom: 0.7rem;
+  }
+
+  h2 {
+    font-size: clamp(1.55rem, 4vw, 2.2rem);
+    font-weight: 780;
+    letter-spacing: -0.02em;
+    line-height: 1.2;
+    color: #fff;
+    margin-bottom: 1rem;
+  }
+
+  p { margin: 1rem 0; color: #dbe2ec; }
+  p.intro { color: var(--text); font-size: 1.08rem; }
+
+  em { color: var(--purple); font-style: italic; }
+  strong { color: #fff; font-weight: 700; }
+
+  code.inline {
+    font-family: "SF Mono", ui-monospace, "Cascadia Code", Menlo, Consolas, monospace;
+    font-size: 0.86em;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 5px;
+    padding: 0.12em 0.42em;
+    color: var(--orange);
+    white-space: nowrap;
+  }
+
+  /* ---------- HOOK / PAIN-DREAM ---------- */
+  .hookcard {
+    margin: 1.8rem 0 0;
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--purple);
+    background: var(--surface);
+    border-radius: 0 14px 14px 0;
+    padding: 1.5rem 1.6rem;
+  }
+  .hookcard p { margin: 0.5rem 0; }
+  .hookcard p:first-child { margin-top: 0; }
+  .hookcard p:last-child { margin-bottom: 0; }
+
+  /* ---------- INSIDE GRID (the 7 patterns) ---------- */
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+    margin-top: 1.8rem;
+  }
+  .card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.3rem 1.35rem;
+    transition: border-color 0.18s, transform 0.18s, box-shadow 0.18s;
+  }
+  .card:hover {
+    border-color: rgba(6,182,212,0.5);
+    transform: translateY(-3px);
+    box-shadow: 0 12px 30px rgba(0,0,0,0.35);
+  }
+  .card .tag {
+    display: inline-block;
+    font-family: "SF Mono", ui-monospace, Menlo, monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: var(--bg);
+    background: linear-gradient(135deg, var(--cyan), var(--purple));
+    border-radius: 6px;
+    padding: 0.18rem 0.55rem;
+    margin-bottom: 0.7rem;
+    font-weight: 700;
+  }
+  .card h3 {
+    font-size: 1.12rem;
+    font-weight: 720;
+    color: #fff;
+    margin-bottom: 0.35rem;
+    letter-spacing: -0.01em;
+  }
+  .card p { margin: 0; font-size: 0.95rem; color: var(--muted); }
+  .card p .hl { color: #cdd6e4; }
+
+  /* ---------- CODE PEEK ---------- */
+  .codeblock {
+    position: relative;
+    margin: 1.8rem 0 0;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    background: var(--code-bg);
+    box-shadow: 0 8px 30px rgba(0,0,0,0.35);
+    overflow: hidden;
+  }
+  .codeblock .bar {
+    display: flex;
+    align-items: center;
+    gap: 0.7rem;
+    padding: 0.55rem 0.9rem;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+  }
+  .codeblock .dots { display: flex; gap: 0.4rem; }
+  .codeblock .dots span { width: 11px; height: 11px; border-radius: 50%; display: inline-block; }
+  .dots .d1 { background: #ff5f56; }
+  .dots .d2 { background: #ffbd2e; }
+  .dots .d3 { background: #27c93f; }
+  .codeblock .lang {
+    font-family: "SF Mono", ui-monospace, Menlo, monospace;
+    font-size: 0.72rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--muted);
+  }
+  .codeblock pre {
+    margin: 0;
+    padding: 1.1rem 1.2rem;
+    overflow-x: auto;
+    font-family: "SF Mono", ui-monospace, "Cascadia Code", Menlo, Consolas, monospace;
+    font-size: 0.82rem;
+    line-height: 1.65;
+    color: #d6deec;
+    tab-size: 2;
+  }
+  .codeblock pre code { font-family: inherit; color: inherit; background: none; white-space: pre; }
+  .codeblock pre::-webkit-scrollbar { height: 9px; }
+  .codeblock pre::-webkit-scrollbar-track { background: transparent; }
+  .codeblock pre::-webkit-scrollbar-thumb { background: var(--border); border-radius: 9px; }
+  .cap { font-size: 0.9rem; color: var(--muted); margin-top: 0.9rem; }
+
+  /* ---------- PROOF ---------- */
+  .proof {
+    margin-top: 1.8rem;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+  }
+  .stat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.3rem 1rem;
+    text-align: center;
+  }
+  .stat .n {
+    font-size: 1.9rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    background: linear-gradient(120deg, var(--green), var(--cyan));
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .stat .l { font-size: 0.86rem; color: var(--muted); margin-top: 0.25rem; }
+
+  .quote {
+    margin-top: 1.6rem;
+    border-left: 3px solid var(--cyan);
+    background: var(--surface);
+    border-radius: 0 12px 12px 0;
+    padding: 1.3rem 1.5rem;
+    font-size: 1.08rem;
+    color: #e7edf6;
+    font-style: italic;
+  }
+  .quote .by { display: block; margin-top: 0.7rem; font-style: normal; font-size: 0.9rem; color: var(--muted); }
+
+  /* ---------- WHO / HONEST ---------- */
+  .twocol { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; margin-top: 1.6rem; }
+  .listbox {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 1.3rem 1.4rem;
+  }
+  .listbox h4 { font-size: 1rem; color: #fff; margin-bottom: 0.7rem; font-weight: 720; }
+  .listbox ul { list-style: none; }
+  .listbox li { position: relative; padding-left: 1.5rem; margin: 0.55rem 0; color: #cdd6e4; font-size: 0.96rem; }
+  .listbox.yes li::before { content: "✓"; position: absolute; left: 0; color: var(--green); font-weight: 800; }
+  .listbox.no li::before { content: "✕"; position: absolute; left: 0; color: var(--red); font-weight: 800; }
+
+  /* ---------- FINAL CTA ---------- */
+  .finalcta {
+    margin-top: 3.6rem;
+    padding: 3rem 1.5rem 3.4rem;
+    text-align: center;
+    border-top: 1px solid var(--border);
+    border-radius: 18px;
+    background:
+      radial-gradient(700px 320px at 50% 0%, rgba(6,182,212,0.10), transparent 70%),
+      var(--surface);
+  }
+  .finalcta h2 { margin-bottom: 0.8rem; }
+  .finalcta p { max-width: 560px; margin: 0 auto 1.8rem; color: var(--muted); }
+  .finalcta .price-row {
+    font-size: 1rem; color: var(--muted); margin-top: 1rem;
+  }
+  .finalcta .price-row strong { color: var(--text); }
+
+  /* ---------- FOOTER ---------- */
+  footer {
+    text-align: center;
+    padding: 2.6rem 1.5rem 3rem;
+    color: var(--muted);
+    font-size: 0.9rem;
+  }
+  footer a { color: var(--cyan); text-decoration: none; }
+
+  ::selection { background: rgba(6,182,212,0.3); color: #fff; }
+
+  /* ---------- MOBILE ---------- */
+  @media (max-width: 680px) {
+    body { font-size: 16px; }
+    .grid { grid-template-columns: 1fr; }
+    .proof { grid-template-columns: 1fr; }
+    .twocol { grid-template-columns: 1fr; }
+    header.hero { padding: 3.5rem 1.2rem 2.8rem; }
+    .buy-btn { width: 100%; justify-content: center; font-size: 1.08rem; padding: 1rem 1.4rem; }
+  }
+</style>
+</head>
+<body>
+
+<!-- ===================== HERO ===================== -->
+<header class="hero">
+  <div class="badge">Agent World Kit · Build in public</div>
+  <h1>The AI agents you saw living in Minecraft — here's the exact build.</h1>
+  <p class="sub">You walk up to them. You talk. They build, scout, follow a task list, and hand jobs to each other. Not a video. Real agents, in a real world.</p>
+  <p class="lede">I built it in public. People kept asking "how." This is how — every pattern, with the working code, nothing held back.</p>
+
+  <a class="buy-btn" href="https://buy.stripe.com/3cI5kCcGtfzgdyMaPi1gs01">
+    Get the kit <span class="price">— $29</span> <span class="arrow">&rarr;</span>
+  </a>
+  <div class="buy-meta">Instant access · <strong>$0 API bill</strong> — agents run on your own subscription</div>
+
+  <div class="req">
+    You need: a Paper 1.21.4 server, Node 18+, and a Claude (or ChatGPT/Codex) subscription. <strong>That's it.</strong>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ===================== HOOK ===================== -->
+  <section class="block">
+    <div class="eyebrow">The hook</div>
+    <h2>Everyone is talking about AI agents. Almost nobody has watched one actually <em>do</em> something.</h2>
+    <p class="intro">Most "agent" demos are a chat box pretending. This is different. These agents have a body in a world, eyes that see it, and a loop that lets them act, check their work, and keep going.</p>
+    <div class="hookcard">
+      <p>You say <strong>"build me a watchtower here."</strong> The foreman agent answers in chat, delegates to the mason, and the mason lays a foundation —</p>
+      <p><em>looks at it</em>, raises the walls, <em>checks again</em>, adds a roof. Meanwhile the scout runs north and reports back what it found.</p>
+      <p>You only ever talk to the boss. The crew handles the rest. <strong>It feels alive because the architecture makes it alive.</strong></p>
+    </div>
+    <p>This kit is the build-in-public payoff: the same machine, taken apart on the table, so you can run it yourself this weekend.</p>
+  </section>
+
+  <!-- ===================== THE ONE IDEA ===================== -->
+  <section class="block">
+    <div class="eyebrow">The core idea</div>
+    <h2>An agent = a body + a brain, bridged by a loop.</h2>
+    <p>Strip away the buzzwords and that's all an agent is. <strong>The body</strong> is a Mineflayer bot that logs in as a player. <strong>The brain</strong> is a headless <code class="inline">claude -p</code> (or <code class="inline">codex exec</code>) process. <strong>The bridge</strong> is your code: it takes what the bot sees, asks the brain what to do, and runs the answer as Minecraft commands.</p>
+    <p>Everything else in the kit is detail layered on top of those three things — and the kit hands you all of it.</p>
+  </section>
+
+  <!-- ===================== WHAT'S INSIDE ===================== -->
+  <section class="block">
+    <div class="eyebrow">What's inside</div>
+    <h2>Seven patterns. Real, working code for every one.</h2>
+    <p class="intro">Not theory. Not pseudocode. The actual functions that run the world, with the gotchas already solved.</p>
+
+    <div class="grid">
+      <div class="card">
+        <span class="tag">Brain bridge</span>
+        <h3>$0-per-call brains</h3>
+        <p><span class="hl">The trick: never set an API key.</span> Claude Code and Codex fall back to your logged-in subscription. The kit shows the exact spawn call, plus the JSON output contract that keeps the brain on rails.</p>
+      </div>
+      <div class="card">
+        <span class="tag">Perception</span>
+        <h3>Give the agent eyes</h3>
+        <p><span class="hl">The big one.</span> A blind brain guesses. The <code class="inline">senses()</code> function feeds the bot's real position, biome, nearby structures, and players into every prompt. The moment it can <em>see</em>, it stops being a puppet.</p>
+      </div>
+      <div class="card">
+        <span class="tag">Agent loop</span>
+        <h3>Multi-step work that finishes</h3>
+        <p>One-shot agents do one batch and stop. The loop does <span class="hl">perceive &rarr; act &rarr; re-perceive &rarr; continue</span> until the brain says it's done. That's what makes a builder check its own work.</p>
+      </div>
+      <div class="card">
+        <span class="tag">Orchestrator</span>
+        <h3>One boss, a whole crew</h3>
+        <p>Don't be the dispatcher. One agent is the <span class="hl">foreman</span> — you talk to it, it delegates to the crew, they run in parallel. The kit gives you the <code class="inline">delegate</code> routing.</p>
+      </div>
+      <div class="card">
+        <span class="tag">Task system</span>
+        <h3>A list they actually follow</h3>
+        <p>Borrowed from real agent frameworks: typed tasks with <span class="hl">status, assignee, results, and dependency edges</span> — rendered live as boss bars on screen so you watch the work move.</p>
+      </div>
+      <div class="card">
+        <span class="tag">Polish + stability</span>
+        <h3>The stuff that sells it</h3>
+        <p>Nameplates, gadget items (Compass, Task Wand, Recall Horn), teleport movement — plus the <span class="hl">stability fixes and pinned versions</span> that stop the bots from flapping on reconnect.</p>
+      </div>
+    </div>
+
+    <p class="cap" style="margin-top:1.6rem;">Delivered as a clean, self-contained guide with copy-paste code blocks — the same one the build runs on.</p>
+  </section>
+
+  <!-- ===================== CODE PEEK ===================== -->
+  <section class="block">
+    <div class="eyebrow">A real look inside</div>
+    <h2>This is the perception function. It's in the kit verbatim.</h2>
+    <p>No watered-down "example." What's below is the code that gives the agents eyes — exactly as it ships:</p>
+
+    <div class="codeblock">
+      <div class="bar">
+        <div class="dots"><span class="d1"></span><span class="d2"></span><span class="d3"></span></div>
+        <span class="lang">javascript · senses(bot)</span>
+      </div>
+      <pre><code>const found = bot.findBlocks({ matching: built, maxDistance: 48, count: 120 })
+if (found.length &gt; 6) lines.push(`A structure of ~${found.length} placed blocks is nearby.`)
+
+for (const e of Object.values(bot.entities))
+  if (e.type === 'player' &amp;&amp; e.username &amp;&amp; e.position.distanceTo(pos) &lt; 32)
+    lines.push(`${e.username} is ${R(e.position.distanceTo(pos))}m away.`)
+
+return '[WHAT YOU SEE:\n- ' + lines.join('\n- ') + ']'</code></pre>
+    </div>
+    <p class="cap">Inject that into every prompt and the agent can say <em>"I'm in a savanna, your glass platform is 10 blocks north."</em> That one shift is the difference between a chatbot and an agent.</p>
+  </section>
+
+  <!-- ===================== PROOF ===================== -->
+  <section class="block">
+    <div class="eyebrow">Why it's worth $29</div>
+    <h2>Built in public, in front of everyone, on purpose.</h2>
+    <p class="intro">The world is real and the questions were real. This kit exists because enough people watched it work and asked the same thing: <em>how do I build this?</em></p>
+
+    <div class="proof">
+      <div class="stat"><div class="n">7</div><div class="l">production patterns, full code</div></div>
+      <div class="stat"><div class="n">$0</div><div class="l">API bill — runs on your sub</div></div>
+      <div class="stat"><div class="n">1</div><div class="l">weekend to a living world</div></div>
+    </div>
+
+    <div class="quote">
+      You're not buying an idea. You're buying the version where the gotchas are already solved — the reconnect backoff, the version pins, the JSON contract, the offline-UUID math. The stuff that costs you a weekend of debugging if you start from a blank file.
+      <span class="by">— the honest pitch</span>
+    </div>
+  </section>
+
+  <!-- ===================== WHO IT'S FOR ===================== -->
+  <section class="block">
+    <div class="eyebrow">Straight talk</div>
+    <h2>Who this is for — and who it isn't.</h2>
+    <div class="twocol">
+      <div class="listbox yes">
+        <h4>Get it if you</h4>
+        <ul>
+          <li>Want agents that <em>do</em> things, not just chat</li>
+          <li>Can run a Node script and a Minecraft server</li>
+          <li>Learn fastest from real, working code</li>
+          <li>Have a Claude or ChatGPT subscription already</li>
+          <li>Want to understand the loop, not just copy it</li>
+        </ul>
+      </div>
+      <div class="listbox no">
+        <h4>Skip it if you</h4>
+        <ul>
+          <li>Want a one-click installer with zero setup</li>
+          <li>Won't touch a terminal at all</li>
+          <li>Are looking for a hosted SaaS, not a build</li>
+          <li>Expect a refund for not reading it</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== FINAL CTA ===================== -->
+  <section class="finalcta">
+    <div class="eyebrow" style="text-align:center;">Get the build</div>
+    <h2>Go make your world weird.</h2>
+    <p>Body + brain + loop, with eyes, a foreman, and a task list. Every pattern, with the real code. Start with one agent that can chat and build — by the end you've got a crew.</p>
+    <a class="buy-btn" href="https://buy.stripe.com/3cI5kCcGtfzgdyMaPi1gs01">
+      Get the Agent World Kit <span class="price">— $29</span> <span class="arrow">&rarr;</span>
+    </a>
+    <div class="price-row">One-time <strong>$29</strong> · instant access · secure checkout via Stripe</div>
+  </section>
+
+</main>
+
+<footer>
+  Agent World Kit · built in public · payments handled securely by <a href="https://buy.stripe.com/3cI5kCcGtfzgdyMaPi1gs01">Stripe</a>
+</footer>
+
+</body>
+</html>
